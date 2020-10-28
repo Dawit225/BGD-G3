@@ -46,10 +46,6 @@ select distinct on (longit, latit) *
 from public.block 
 
 
---- Preprocessing the myprecip table ---
-
-
-
 --- Calculating the observer intensity ---
 
 create table obs_int
@@ -59,5 +55,5 @@ group by obsdate, block
 order by obsdate, block
 
 
---- 
+--- Joining the tables mytemperature, myprecip, and myblock ---
  
