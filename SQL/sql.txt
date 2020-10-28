@@ -37,5 +37,5 @@ Creating new table and ingest records without duplicates
 
 create table s2257335.myblock as 
 select distinct on (longit, latit) *
-from public.block
+from public.block 
  
