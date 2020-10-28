@@ -10,9 +10,15 @@ we first copy some tables from the public schema to our personal schema.
 
 3) create table s2257335.myprecip as
    select * from public.precipitation
-   where dtime BETWEEN '2017-01-01' AND '2017-06-06'
+   where dtime BETWEEN '2017-01-01' AND '2017-06-30'
  
-
+ 4) create table s2257335.mytemperature as
+    select * from public.temperature
+    where dtime BETWEEN '2017-01-01' AND '2017-06-30'
+    
+    
+    
+    
 --- For the block table---
 
 Cheking for the duplicated records (latit and longit)
@@ -38,4 +44,9 @@ Creating new table and ingest records without duplicates
 create table s2257335.myblock as 
 select distinct on (longit, latit) *
 from public.block 
+
+
+--- For the observation table ---
+
+
  
