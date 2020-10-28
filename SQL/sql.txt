@@ -70,4 +70,4 @@ select t.block, t.temper, p.precip, t.dtime
 from s2257335.mytemperature as t
 inner join s2257335.myprecip as p on t.dtime = p.dtime AND p.block = t.block
 where t.block IN (select block from s2257335.myblock)
-order by t.dtime, t.block asc
+order by t.dtime, t.block asc 
