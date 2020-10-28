@@ -54,8 +54,20 @@ from s2257335.myobservation
 group by obsdate, block
 order by obsdate, block
 
+--- There was a data format problem both in mytemperature and my precip table ---
 
---- Joining the tables mytemperature, myprecip, and myblock ---
+ALTER TABLE s2257335.mytemperature
+ALTER COLUMN dtime TYPE integer USING dtime::date;
 
-select 
+ALTER TABLE s2257335.mytemprecip
+ALTER COLUMN dtime TYPE integer USING dtime::date;
  
+
+
+--- Joining the tables s2257335.mytemperature, s2257335.myprecip, and s2257335.myblock ---
+
+select t.block, t.temper, p.precip, t.dtime
+from s2257335.mytemperature as t
+inner join s2257335.myprecip as p on t.dtime = p.dtime AND p.block = t.block
+where t.block IN (select block from s2257335.myblock)
+order by t.dtime, t.block asc
