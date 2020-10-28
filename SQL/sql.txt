@@ -1,1 +1,35 @@
+Because of lacking previlege to work on the public schema such as deleting records and altering attributes,
+we first copy some tables from the public schema to our personal schema.
+       
+1) create table 23357335.myblock as
+   select * from public.block;
 
+2) create table 
+
+
+
+--- For the block table---
+
+Cheking for the duplicated records (latit and longit)
+
+SELECT block, latit, longit, geom FROM block WHERE (latit, longit) IN
+  (SELECT latit, longit FROM block GROUP BY (latit, longit) HAVING COUNT(*) > 1)
+
+Filtering out the duplicates
+
+select distinct on (longit, latit) *
+from myblock
+
+Delete the blocks outside the Netherlands (2 blocks)
+
+DELETE FROM myblock
+WHERE block = 44643 and longit = 249 and latit = 0 and urlnr = '870169';
+                                    &&
+DELETE FROM myblock
+WHERE block = 44644 and longit = 254 and latit = 0 and urlnr = '870170';
+
+Creating new table and ingest records without duplicates
+
+create table s2257335.myblock as 
+select distinct on (longit, latit) *
+from public.block
