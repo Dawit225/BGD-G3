@@ -5,10 +5,13 @@ we first copy some tables from the public schema to our personal schema.
    select * from public.block;
 
 2) create table s2257335.mybservation as 
-select * from public.observation
-where obsdate BETWEEN '2017-01-01' and '2017-06-30'
+   select * from public.observation
+   where obsdate BETWEEN '2017-01-01' AND '2017-06-30'
 
-
+3) create table s2257335.myprecip as
+   select * from public.precipitation
+   where dtime BETWEEN '2017-01-01' AND '2017-06-06'
+ 
 
 --- For the block table---
 
