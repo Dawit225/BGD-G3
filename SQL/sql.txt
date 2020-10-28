@@ -56,4 +56,6 @@ order by obsdate, block
 
 
 --- Joining the tables mytemperature, myprecip, and myblock ---
+
+select 
  
