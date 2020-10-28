@@ -4,7 +4,9 @@ we first copy some tables from the public schema to our personal schema.
 1) create table 23357335.myblock as
    select * from public.block;
 
-2) create table 
+2) create table s2257335.mybservation as 
+select * from public.observation
+where obsdate BETWEEN '2017-01-01' and '2017-06-30'
 
 
 
