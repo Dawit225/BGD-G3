@@ -12,9 +12,9 @@ we first copy some tables from the public schema to our personal schema.
    select * from public.precipitation
    where dtime BETWEEN '2017-01-01' AND '2017-06-30'
  
- 4) create table s2257335.mytemperature as
-    select * from public.temperature
-    where dtime BETWEEN '2017-01-01' AND '2017-06-30'
+4) create table s2257335.mytemperature as
+   select * from public.temperature
+   where dtime BETWEEN '2017-01-01' AND '2017-06-30'
     
     
     
@@ -46,11 +46,18 @@ select distinct on (longit, latit) *
 from public.block 
 
 
---- For the observation table ---
+--- Preprocessing the myprecip table ---
+
+
+
+--- Calculating the observer intensity ---
+
 create table obs_int
 select block, obsdate, count(distinct oberver) as obsint
 from s2257335.myobservation
 group by obsdate, block
 order by obsdate, block
 
+
+--- 
  
