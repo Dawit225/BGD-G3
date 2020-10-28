@@ -47,6 +47,10 @@ from public.block
 
 
 --- For the observation table ---
-
+create table obs_int
+select block, obsdate, count(distinct oberver) as obsint
+from s2257335.myobservation
+group by obsdate, block
+order by obsdate, block
 
  
