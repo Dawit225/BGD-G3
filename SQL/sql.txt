@@ -88,7 +88,92 @@ inner join sum_road as s on c.block = s.block
 order by c.block, c.day
 
 
----                      ----
+---   Aggregation of our final table in a weekly basis   ----
+---vf5 is the view ---
+
+create table finall as
+select * from vf5
+
+--- Adding week column in our finall table ---
+
+alter table finall
+add column week_num int
+
+update finall set week=(select dow from public.days where odate=dtime);
+
+update finall set week_num=1 
+  where dtime <= '2017-01-08';
+update finall set week_num=2 
+  where dtime > '2017-01-08' and dtime <= '2017-01-15';
+update finall set week_num=3 
+  where dtime > '2017-01-15' and dtime <= '2017-01-22'; 
+update finall set week_num=4 
+  where dtime > '2017-01-22' and dtime <= '2017-01-29'; 
+
+update finall set week_num=5 
+  where dtime > '2017-01-29' and dtime <= '2017-02-05'; 
+update finall set week_num=6 
+  where dtime > '2017-02-05' and dtime <= '2017-02-12';
+update finall set week_num=7 
+  where dtime > '2017-02-12' and dtime <= '2017-02-19';
+update finall set week_num=8 
+  where dtime > '2017-02-19' and dtime <= '2017-02-26';
+
+update finall set week_num=9 
+  where dtime > '2017-02-26' and dtime <= '2017-03-05';
+update finall set week_num=10 
+  where dtime > '2017-03-05' and dtime <= '2017-03-12';
+update finall set week_num=11 
+  where dtime > '2017-03-12' and dtime <= '2017-03-19';
+update finall set week_num=12 
+  where dtime > '2017-03-19' and dtime <= '2017-03-26';
+
+update finall set week_num=13 
+  where dtime > '2017-03-26' and dtime <= '2017-04-02';
+update finall set week_num=14 
+  where dtime > '2017-04-02' and dtime <= '2017-04-09';
+update finall set week_num=15 
+  where dtime > '2017-04-09' and dtime <= '2017-04-16';
+update finall set week_num=16 
+  where dtime > '2017-04-16' and dtime <= '2017-04-23';
+
+update finall set week_num=17 
+  where dtime > '2017-04-23' and dtime <= '2017-04-30';
+update finall set week_num=18 
+  where dtime > '2017-04-30' and dtime <= '2017-05-07';
+update finall set week_num=19 
+  where dtime > '2017-05-07' and dtime <= '2017-05-14';
+update finall set week_num=20 
+  where dtime > '2017-05-14' and dtime <= '2017-05-21';
+update finall set week_num=21 
+  where dtime > '2017-05-21' and dtime <= '2017-05-28';
+update finall set week_num=22 
+  where dtime > '2017-05-28' and dtime <= '2017-06-05';
+update finall set week_num=23 
+  where dtime > '2017-06-05' and dtime <= '2017-06-12';
+update finall set week_num=24 
+  where dtime > '2017-06-12' and dtime <= '2017-06-19';
+update finall set week_num=25 
+  where dtime > '2017-06-19' and dtime <= '2017-06-26';
+
+update finall set week_num=26 
+  where dtime > '2017-06-26' and dtime <= '2017-07-02';
+  
+---  Creaing our last table based on the weekly aggregated data ---
+
+create table final_data
+  as select block,week_num, avg(temper) as temperature, avg(precip) 
+  as precipitation, sum(obs_intensity) as obs_intensity
+  from finall group by (block,week_num);
+  
+ alter table final_data add column accessibility double precision;
+alter table final_data add column popuation int;
+
+update final_data as t3 set accessibility = t2.accessibility,
+  popuation=t2.population
+  
+  
+
 
 
 
