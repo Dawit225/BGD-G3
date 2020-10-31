@@ -10,8 +10,8 @@ There are four separate folders in this repository.
   - At first we did a preprocessing on the main data set.
   - After the initail preprocessing on the main dataset, becouse of the problems with the actual data set (for example many records have a value of one), we have decided to aggregate our original dataset.
   - So we have aggregated our original dataset by once by month and again by week. then we developed random forest regression models for each one of these two datasets (weekly aggregated dataset and monthly aggregated dataset). The reseain behind this decision was that we wanted to investigate the impact of data aggregation of the final model and to see how the regression models will react with these two different datasets and of course to use the model with better result.
-  - then we explained the process of removing outliers from two datasets (weekly aggregated data and monthly aggregated data). 
-  - finally,this file contains data, code, and the resuslt of four separate regression models for the weekly and monthly aggregated data with outliers and without outliers. so you could see the result of random forest regression model and it's associated error for four scenarios (with four different datasets, weekly and monthly aggregated data with and without outliers) and compare the results.
+  - Then we explained the process of removing outliers from two datasets (weekly aggregated data and monthly aggregated data). 
+  - Finally,this file contains data, code, and the resuslt of four separate regression models for the weekly and monthly aggregated data with outliers and without outliers. so you could see the result of random forest regression model and it's associated error for four scenarios (with four different datasets, weekly and monthly aggregated data with and without outliers) and compare the results.
   - comments are associated along with the code snippet.
 
 4) The Output folder contains results of the regression model. The results are listed inside the folder.
