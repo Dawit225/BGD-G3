@@ -6,7 +6,15 @@ This document shows the process of data management and data cleaning and creatin
 * The whole part of the section was done in PgAdmin and we have used SQL language in order to clean the data an provide the final outpot.
 
 ** based on objectives of the research, we have decided to limit our work to few tables including the observation table, the temprature table, the block table, the block accessibity table, tha population table
-Because of lacking previlege to work on the public schema such as deleting records and altering attributes,
+
+***At the end of this process, we expect to get three tables as output:
+              table 1) "main.csv" -->> "date(data of observation)","block(block number)","temp(day temperature)","prec(precipitation of the day)","access (block accessibility)","pop(block population)","obs(observation density - number of obsservation/day/block)","long(block longitude)","lat(block latitude)"
+              
+              table 2)
+              
+              table 3) "AggregateWeek.csv"
+              
+              Because of lacking previlege to work on the public schema such as deleting records and altering attributes,
 we first copy some tables from the public schema to our personal schema.
        
 1) create table 23357335.myblock as
