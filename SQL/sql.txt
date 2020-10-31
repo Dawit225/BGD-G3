@@ -76,18 +76,110 @@ create view s2326965.obs_int_v1 as
 temprature table
 ***
 _____________________
+--to see if there is any duplicate values in the tempreture table
+-----
+select t.block, t.dtime , count(*)
+FROM public.temperature as t
+group by t.block, t.dtime
+HAVING count(*) > 1
+(there is not any duplication in this table)
+_____________________
 --creating temperature table in personal schima, from unique values (records)
 -----
-create table s2326965.g3temperature as
-   select * from public.temperature
-   where dtime BETWEEN '2017-01-01' AND '2017-06-30'
+create table s2326965.g3temp as
+   select distinct on (longit, latit) * from public.temperature
+ (43357 records)
+_____________________
+--creating temperature table in personal schima, from unique values (records) based on the project time frame
+-----
+
+************************************************************
+************************************************************
+percipitation table
+_____________________
+--to see if there is any duplicate values in the tempreture table
+-----
+select t.block, t.dtime , count(*)
+FROM public.temperature as t
+group by t.block, t.dtime
+HAVING count(*) > 1
+(there is not any duplication in this table)
+
+
+************************************************************
+************************************************************
+block road densify table
+***
+_____________________
+--to see if there is any duplicate values in the road table
+-----
+select b.block, b.maintainer, count(*)
+  FROM public.block_road_access as b
+  group by b.block, b.maintainer
+  HAVING count(*) > 1
+(there is not any duplication in this table)
+_____________________
+--to create a new road table in the personal schema, we have used group by the block number to calculate the total road length in the block (maintained by different organizations)
+create table s2326965.g3road as
+  select b.block, sum(b.roadlength)
+  FROM public.block_road_access as b
+  group by b.block
+(34314 records)
+
+
 
 ************************************************************
 ************************************************************
 population table
 ***
+_____________________
+--to see if there is any duplicate values in the population table
+-----  
+select b.geom, count(*)
+  FROM public.demography as b
+  group by b.geom
+  HAVING count(*) > 1
+(there is not any duplication in this table)
+_____________________
+--to create a table in personal schema from demography table based on the original block. this query will add block numbers to the population table
+-----  
+CREATE table s2326965.g3population as
+  select b.geom, b.block, d.aantal_inw
+  from public.demography as d, public.block as b 
+  where ST_Contains(b.geom, d.geom)
+  (150032 records)
+_____________________
+--since for each block number in this veiw, there are one to four records, it's time to combine population data from the records with the same block number.
+this way we will take care of the fact that for each block from the block table (size 1 km2) there are one to four blocks from the demography table (with the size of 500 m2). So we have to calculate the sum of records that have the same block number.
+-----  
+_____________________
+--to create a column for storing final population in the table
+-----
+ALTER TABLE s2326965.g3population
+ADD population bigint;
+_____________________
+--to update the population column, replacing negative values with zero
+-----
+UPDATE s2326965.g3population
+SET population = 0
+WHERE aantal_inw = -99997
 
-              
+UPDATE s2326965.g3population
+SET population=aantal_inw
+WHERE aantal_inw <> -99997
+_____________________
+--aggregate the pop table based on blocks and create a new table demo table
+-----
+/**/
+create table s2326965.g3population_final as
+  select pop.block, sum(pop.population) as pop
+  from s2326965.g3population as pop
+  group by pop.block
+(37994 records)
+
+
+
+
               Because of lacking previlege to work on the public schema such as deleting records and altering attributes,
 we first copy some tables from the public schema to our personal schema.
        
