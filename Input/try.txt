@@ -1,1 +1,8 @@
+*************************
+*****************
+********
+This file contains information regarding to the outpot of data managemet process using PgAdmin and SQL.
 
+The folders contains 3 csv files representing 3 tables to be used in the preprocessing and machine learning process.
+  
+  1)
