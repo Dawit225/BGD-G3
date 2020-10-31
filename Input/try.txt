@@ -5,4 +5,8 @@ This file contains information regarding to the outpot of data managemet process
 
 The folders contains 3 csv files representing 3 tables to be used in the preprocessing and machine learning process.
   
-  1)
+                table 1) "main.csv" -->> "date(data of observation)","block(block number)","temp(day temperature)","prec(precipitation of the day)","access (block accessibility)","pop(block population)","obs(observation density - number of obsservation/day/block)","long(block longitude)","lat(block latitude)"
+              
+              table 2) "aggregatedByMonth.csv" -->>  "mont(month of observations)", "block(block number)", "pop(block population)", "tem(monthly average temperature in the block)", "prec(monthly average precipitation in the block)", "acces (block accessibility)", "obs(observation density - number of obsservation/month/block)", "long(block longitude)", "lat(block latitude)"
+              
+              table 3) "AggregateWeek.csv" -->> "week(month of observations)", "block(block number)", "pop(block population)", "acces (block accessibility)", "tem(weekly average temperature in the block)", "prec(weeekly average precipitation in the block)","acces (block accessibility)","obs(observation density - number of obsservation/week/block)", "long(block longitude)", "lat(block latitude)"
