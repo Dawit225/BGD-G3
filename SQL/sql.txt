@@ -10,9 +10,83 @@ This document shows the process of data management and data cleaning and creatin
 ***At the end of this process, we expect to get three tables as output:
               table 1) "main.csv" -->> "date(data of observation)","block(block number)","temp(day temperature)","prec(precipitation of the day)","access (block accessibility)","pop(block population)","obs(observation density - number of obsservation/day/block)","long(block longitude)","lat(block latitude)"
               
-              table 2)
+              table 2) "aggregatedByMonth.csv" -->>  "mont(month of observations)", "block(block number)", "pop(block population)", "tem(monthly average temperature in the block)", "prec(monthly average precipitation in the block)", "acces (block accessibility)", "obs(observation density - number of obsservation/month/block)", "long(block longitude)", "lat(block latitude)"
               
-              table 3) "AggregateWeek.csv"
+              table 3) "AggregateWeek.csv" -->> "week(month of observations)", "block(block number)", "pop(block population)", "acces (block accessibility)", "tem(weekly average temperature in the block)", "prec(weeekly average precipitation in the block)","acces (block accessibility)","obs(observation density - number of obsservation/week/block)", "long(block longitude)", "lat(block latitude)"
+              
+              
+************************************************************
+************************************************************
+block table
+***
+for the original block table,after creating another table in our personal schema, first we checked the table for duplicate records, missing values and blocks outside netherlands. then we removed those values
+_____________________
+--creating block table in personal schema, from the public block table: by this query we are only selecting those records with unique values and avoiding duplications
+-----
+create table s2326965.g3block as
+  select distinct on (longit, latit) *
+  from public.block
+(45020 records)
+_____________________
+--to remove values that are outside the netherlands
+-----
+DELETE FROM g3block
+WHERE longit = 249 and latit = 0;
+
+DELETE FROM g3block
+WHERE longit = 254 and latit = 0;
+(45018 records)
+_____________________
+--to check if there is any missing values in the g3block table
+-----
+select b.block
+from g3block as b
+where b.block is NULL or b.geom is NULL 
+(there is no missing values in this table)
+_____________________
+
+
+
+************************************************************
+************************************************************
+observation table
+***
+_____________________
+--creating observation view in personal schema, based on the project time line (6 month)
+-----
+create view s2326965.g3observ_v as 
+   select * from public.observation
+   where obsdate BETWEEN '2017-01-01' AND '2017-06-30'
+(2530161 records)
+_____________________
+--creating observation view in personal schema, based on the project time line (6 month)
+-----
+create view s2326965.obs_int_v1 as
+  select block, obsdate, count(g3observ_v.observer) as obsint
+  from s2326965.g3observ_v
+  group by obsdate, block
+  order by obsdate, block
+ (538524 records)
+ _____________________
+ 
+ 
+ 
+************************************************************
+************************************************************
+temprature table
+***
+_____________________
+--creating temperature table in personal schima, from unique values (records)
+-----
+create table s2326965.g3temperature as
+   select * from public.temperature
+   where dtime BETWEEN '2017-01-01' AND '2017-06-30'
+
+************************************************************
+************************************************************
+population table
+***
+
               
               Because of lacking previlege to work on the public schema such as deleting records and altering attributes,
 we first copy some tables from the public schema to our personal schema.
@@ -34,32 +108,7 @@ we first copy some tables from the public schema to our personal schema.
     
     
     
- ******************************   
---- For the block table---
 
-Cheking for the duplicated records (latit and longit)
-
-SELECT block, latit, longit, geom FROM block WHERE (latit, longit) IN
-  (SELECT latit, longit FROM block GROUP BY (latit, longit) HAVING COUNT(*) > 1)
-
-Filtering out the duplicates
-
-select distinct on (longit, latit) *
-from myblock
-
-Delete the blocks outside the Netherlands (2 blocks)
-
-DELETE FROM myblock
-WHERE block = 44643 and longit = 249 and latit = 0 and urlnr = '870169';
-                                    &&
-DELETE FROM myblock
-WHERE block = 44644 and longit = 254 and latit = 0 and urlnr = '870170';
-
-Creating new table and ingest records without duplicates
-
-create table s2257335.myblock as 
-select distinct on (longit, latit) *
-from public.block 
 
 
 --- Calculating the observer intensity ---
