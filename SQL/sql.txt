@@ -77,7 +77,7 @@ create view s2326965.obs_int_v1 as
  
 ************************************************************
 ************************************************************
-temprature table
+temperature table
 ***
 _____________________
 --to see if there is any duplicate values in the tempreture table
@@ -91,8 +91,8 @@ _____________________
 --creating temperature table in personal schima, from unique values (records)
 -----
 create table s2326965.g3temp as
-   select distinct on (lon, lat) * from public.temperature
- (43357 records)
+   select * from public.temperature
+ (7847617 records)
 _____________________
 --creating a new column (named date) for temperature date in the temperature table
 -----
@@ -109,7 +109,7 @@ _____________________
 create table s2326965.g3temperature as
    select * from s2326965.g3temp
    where date BETWEEN '2017-01-01' AND '2017-06-30'
-(43357 records)
+(7847617 records)
 
 
 
@@ -129,7 +129,7 @@ _____________________
 -----
 create table s2326965.g3prec as
    select distinct on (lon, lat) * from public.precipitation
- (40226 records)
+ (7280892 records)
 _____________________
 --creating a new column (named date) for precipitation date in the precipitation table
 -----
@@ -146,7 +146,7 @@ _____________________
 create table s2326965.g3precipitation as
    select * from s2326965.g3prec
    where date BETWEEN '2017-01-01' AND '2017-06-30'
- (40226 records)
+ (7280892 records)
 
 
 
@@ -229,337 +229,93 @@ create table s2326965.g3population_final as
 section B : in this section we are going join all tables together based on time and block number
 ************************************************************
 ************************************************************
-population table
+--to combine temperature table with precipitation table based on date and block number
 ***
+create table s2326965.combined_tem_pre as
+select t.block, t.temper, p.precip, t.date
+from s2326965.g3temperature as t
+inner join s2326965.g3precipitation as p on t.dtime = p.dtime AND p.block = t.block
+where t.block IN (select block from s2326965.g3block)
+(7274919 records)
+************************************************************
+--to new combined table joining the previous table with road density table
+***
+create table s2326965.combined_tem_pre_ro as
+select c.block,c.date, c.temper,c.precip, r.road_den as acces 
+from s2326965.combined_tem_pre as c
+inner join s2326965.g3road as r
+on c.block = r.block
+(6194530 records)
+************************************************************
+--to create a new combined table joining the previous table with population density table
+***
+create table s2326965.combined_tem_pre_ro_pop as
+select c.block,c.date, c.temper,c.precip, c.acces, p.pop 
+from s2326965.combined_tem_pre_ro as c
+inner join s2326965.g3population_final as p
+on c.block = p.block
+(6193987 records)
+************************************************************
+--to create the main table, by combining combined table with observation table
+***
+create table main as
+select c.block,c.date, c.temper,c.precip, c.acces, c.pop, o.obsint as obs
+from s2326965.combined_tem_pre_ro_pop as c
+inner join s2326965.obs_int_v1 as o 
+on o.obsdate = c.date AND o.block = c.block
+(514793 records)
 
 
 
-              Because of lacking previlege to work on the public schema such as deleting records and altering attributes,
-we first copy some tables from the public schema to our personal schema.
-       
-1) create table 23357335.myblock as
-   select * from public.block;
 
-2) create table s2257335.mybservation as 
-   select * from public.observation
-   where obsdate BETWEEN '2017-01-01' AND '2017-06-30'
-
-3) create table s2257335.myprecip as
-   select * from public.precipitation
-   where dtime BETWEEN '2017-01-01' AND '2017-06-30'
- 
-4) create table s2257335.mytemperature as
-   select * from public.temperature
-   where dtime BETWEEN '2017-01-01' AND '2017-06-30'
-    
-    
-    
-
-
-
---- Calculating the observer intensity ---
-
-create table obs_int
-select block, obsdate, count(distinct oberver) as obsint
-from s2257335.myobservation
-group by obsdate, block
-order by obsdate, block
-
---- There was a data format problem both in mytemperature and my precip table ---
-
-ALTER TABLE s2257335.mytemperature
-ALTER COLUMN dtime TYPE integer USING dtime::date;
-
-ALTER TABLE s2257335.mytemprecip
-ALTER COLUMN dtime TYPE integer USING dtime::date;
- 
-
-
---- Joining the tables s2257335.mytemperature, s2257335.myprecip, and s2257335.myblock ---
-
-create table s2257335.combined
-select t.block, t.temper, p.precip, t.dtime
-from s2257335.mytemperature as t
-inner join s2257335.myprecip as p on t.dtime = p.dtime AND p.block = t.block
-where t.block IN (select block from s2257335.myblock)
-order by t.dtime, t.block asc 
-
---- Sum the road length ---
-
-create table s2257335.sum_road as
-select block, sum(roadlength)
-from public.block_road_access
-group by block
-
---- Joining s2257335.combined with the s2257335.sum_road ----
-
-create table combined2 as
-select c.block,c.day, c.temperature,c.precipitation,s.sum from combined as c
-inner join sum_road as s on c.block = s.block
-order by c.block, c.day
-
-
----   Aggregation of our final table in a weekly basis   ----
----vf5 is the view ---
-
-create table finall as
-select * from vf5
-
---- Adding week column in our finall table ---
-
-alter table finall
-add column week_num int
-
-update finall set week=(select dow from public.days where odate=dtime);
-
-update finall set week_num=1 
-  where dtime <= '2017-01-08';
-update finall set week_num=2 
-  where dtime > '2017-01-08' and dtime <= '2017-01-15';
-update finall set week_num=3 
-  where dtime > '2017-01-15' and dtime <= '2017-01-22'; 
-update finall set week_num=4 
-  where dtime > '2017-01-22' and dtime <= '2017-01-29'; 
-
-update finall set week_num=5 
-  where dtime > '2017-01-29' and dtime <= '2017-02-05'; 
-update finall set week_num=6 
-  where dtime > '2017-02-05' and dtime <= '2017-02-12';
-update finall set week_num=7 
-  where dtime > '2017-02-12' and dtime <= '2017-02-19';
-update finall set week_num=8 
-  where dtime > '2017-02-19' and dtime <= '2017-02-26';
-
-update finall set week_num=9 
-  where dtime > '2017-02-26' and dtime <= '2017-03-05';
-update finall set week_num=10 
-  where dtime > '2017-03-05' and dtime <= '2017-03-12';
-update finall set week_num=11 
-  where dtime > '2017-03-12' and dtime <= '2017-03-19';
-update finall set week_num=12 
-  where dtime > '2017-03-19' and dtime <= '2017-03-26';
-
-update finall set week_num=13 
-  where dtime > '2017-03-26' and dtime <= '2017-04-02';
-update finall set week_num=14 
-  where dtime > '2017-04-02' and dtime <= '2017-04-09';
-update finall set week_num=15 
-  where dtime > '2017-04-09' and dtime <= '2017-04-16';
-update finall set week_num=16 
-  where dtime > '2017-04-16' and dtime <= '2017-04-23';
-
-update finall set week_num=17 
-  where dtime > '2017-04-23' and dtime <= '2017-04-30';
-update finall set week_num=18 
-  where dtime > '2017-04-30' and dtime <= '2017-05-07';
-update finall set week_num=19 
-  where dtime > '2017-05-07' and dtime <= '2017-05-14';
-update finall set week_num=20 
-  where dtime > '2017-05-14' and dtime <= '2017-05-21';
-update finall set week_num=21 
-  where dtime > '2017-05-21' and dtime <= '2017-05-28';
-update finall set week_num=22 
-  where dtime > '2017-05-28' and dtime <= '2017-06-05';
-update finall set week_num=23 
-  where dtime > '2017-06-05' and dtime <= '2017-06-12';
-update finall set week_num=24 
-  where dtime > '2017-06-12' and dtime <= '2017-06-19';
-update finall set week_num=25 
-  where dtime > '2017-06-19' and dtime <= '2017-06-26';
-
-update finall set week_num=26 
-  where dtime > '2017-06-26' and dtime <= '2017-07-02';
-  
----  Creaing our last table based on the weekly aggregated data ---
-
-create table final_data
-  as select block,week_num, avg(temper) as temperature, avg(precip) 
-  as precipitation, sum(obs_intensity) as obs_intensity
-  from finall group by (block,week_num);
-  
- alter table final_data add column accessibility double precision;
-alter table final_data add column popuation int;
-
-update final_data as t3 set accessibility = t2.accessibility,
-  popuation=t2.population
-  
-  /*to show the information for the road block table*/
-SELECT * FROM public.block_road_access
-ORDER BY roadlength ASC, maintainer ASC, scale ASC LIMIT 1000
-
-/*to count the records in the road block table*/
-SELECT COUNT(*) FROM public.block_road_access
-
-/*to check for the duplicated values*/
-select b.block, b.maintainer, count(*)
-FROM public.block_road_access as b
-group by b.block, b.maintainer
-HAVING count(*) > 1
-
-/*to group by the road block table by block*/
-select b.block, sum(b.roadlength)
-FROM public.block_road_access as b
-group by b.block
-
-/*adjoin geometry to the road table and creating a new view*/
-CREATE VIEW s2326965.roadgeo as
-SELECT rw.sum, rw.block, b.geom
-FROM s2326965.road1 as rw
-INNER JOIN public.block as b 
-ON b.block=rw.block;
-
-/*to show the road geo view table*/
-SELECT * FROM s2326965.roadgeo
-
-/*to count the records in the demography table (49184 records)*/
-SELECT COUNT(*) FROM public.demography
-
-/*to find duplicate values in the demography table*/
-select b.geom, count(*)
-FROM public.demography as b
-group by b.geom
-HAVING count(*) > 1
-
-/*to check if there is the blocks of the demo table are within the original blocks*/
-/*the nunber 17413 is a random original block number*/
-select d.geom, b.geom, b.block
-from public.demography as d, public.block as b 
-where b.block='17413' and ST_Contains(b.geom, d.geom)
-
-/*to join the block table to geometry table*/
-select b.geom, b.block, d.aantal_inw
-from public.demography as d, public.block as b 
-where ST_Contains(b.geom, d.geom)
-order by b.block
-
-/*to create a view for demography table based on the original block*/
-CREATE VIEW s2326965.demoview as
-select b.geom, b.block, d.aantal_inw
-from public.demography as d, public.block as b 
-where ST_Contains(b.geom, d.geom)
-
-/*to create a view for demography table based on the original block*/
-CREATE VIEW s2326965.demoview as
-select b.geom, b.block, d.aantal_inw
-from public.demography as d, public.block as b 
-where ST_Contains(b.geom, d.geom)
-
-/*to see the initial demography view*/
-select * from s2326965.demoview
-limit 100
-
-/*to count the records in the initial demography view (150032 records)*/
-select count(*) from s2326965.demoview
-
-/*to create another coloumn in the initial demography view*/
-ALTER VIEW s2326965.demoview ADD pop bigint
-
-/*create demography table from demoview*/
-SELECT  *
-INTO    s2326965.pop
-FROM    s2326965.demoview
-
-/*to see the population table*/
-select * from s2326965.pop
-order by population desc
-limit 100
-
-/*add population column to the pop table*/
-ALTER TABLE s2326965.pop
-ADD population bigint;
-
-/*update population coloumn with zero values*/
-UPDATE s2326965.pop
-SET population=0
-WHERE aantal_inw= -99997
-  
-/*update the population coloumn with the population data*/
- UPDATE s2326965.pop
-SET population=aantal_inw
-WHERE aantal_inw <> -99997
-
-/*aggregate the pop table based on blocks and create a new table demo table*/
-create table s2326965.demo as
-select pop.block, sum(pop.population) as pop
-from s2326965.pop as pop
-group by pop.block
-
-/*to join the geometry of the block table to the newly created demo table, join the tables and create a new view*/
-CREATE VIEW s2326965.demogeo as
-SELECT demo.pop, b.geom
-FROM s2326965.demo as demo
-INNER JOIN public.block as b 
-ON b.block = demo.block
-
-
-/*take a look at demography table (37994 records)*/
-select * from s2326965.demo
-limit 100
-
-/*take a look at demogeo view (37994 records)*/
-select * from s2326965.demogeo
-limit 100
-
-/*take a look at pop table (150032 records)*/
-select * from s2326965.pop
-limit 100
-
-LIMIT 100
-
-/*to add a month column to data*/
-ALTER TABLE s2326965.fin1
-ADD month varchar(255);
+*******************************************************************************************
+*******************************************************************************************
+*******************************************************************************************
+section B : in this section we are creating monthly and weekly aggregated tables
+************************************************************
+************************************************************
+--weekly aggregated table
+***
+create table s2326965.weeklyAggregated as
+select * from s2326965.main
 
 /*to add week column*/
-ALTER TABLE s2326965.fin1
+ALTER TABLE s2326965.weeklyAggregated
 ADD week varchar(255);
 
-/*to update the month column*/
-UPDATE s2326965.fin1
-SET month = to_char(date,'Mon')
-
 /*to update the week column*/
-UPDATE s2326965.fin1
+UPDATE s2326965.weeklyAggregated
 SET week = DATE_PART('week',date)
 
-/*the aggregation by month*/
-create table s2326965.AggregateMonth as
-select f.month as mont, f.block as block, avg(f.temp) as tem, avg(f.prec) as prec, avg(f.access) as acces, sum(f.obs) as obs, avg(f.long) as long, avg(f.lat) as lat
-from fin1 as f
-group by f.month, f.block
-
 /*to do the aggregation by week*/
-create table s2326965.AggregateWeek as
-select f.week as week, f.block as block, avg(f.pop) as pop, avg(f.access) as acces, avg(f.temp) as tem, avg(f.prec) as prec, sum(f.obs) as obs, avg(f.long) as long, avg(f.lat) as lat
-from fin1 as f
+create table s2326965.s2326965.weeklyAggregated_final as
+select f.week as week, f.block as block, avg(f.pop) as pop, avg(f.acces) as acces, avg(f.temper) as tem, avg(f.precip) as prec, sum(f.obs) as obs
+from s2326965.weeklyAggregated as f
 group by f.week, f.block
+(277886 records)
 
-/*to see the aggregated week table*/
-select * from s2326965.AggregateWeek
-order by pop desc
+************************************************************
+--monthly aggregated table
+***
+create table s2326965.monthlyAggregated as
+select * from s2326965.main
 
-/*to see the aggregated final table*/
-select * from s2326965.AggregateMonth
-
-/*to add week column to the table*/
-ALTER TABLE s2326965.AggregateMonth
-ADD weeks bigint;
+/*to add week column*/
+ALTER TABLE s2326965.monthlyAggregated
+ADD mont varchar(255);
 
 /*to update the week column*/
-UPDATE s2326965.AggregateMonth
-SET weeks = DATEPART(WEEK,DAY(getdate(date)))
+UPDATE s2326965.monthlyAggregated
+SET mont = to_char(date,'Mon')
 
-select * from s2326965.fin1
-SELECT DATE_PART('week',date)
-from s2326965.fin1
+/*to do the aggregation by week*/
+create table s2326965.monthlyAggregated_final as
+select f.mont as month, f.block as block, avg(f.pop) as pop, avg(f.acces) as acces, avg(f.temper) as tem, avg(f.precip) as prec, sum(f.obs) as obs
+from s2326965.monthlyAggregated as f
+group by f.mont, f.block
+(121968 records)
 
-week_agg[week_agg['week']==2]['obs'].hist(alpha=0.5,color='red',
-                                              bins=10,label='January')
 
-select  aw.obs, count(aw.block)
-from s2326965.AggregateWeek as aw
-group by aw.obs
-order by aw.obs desc
   
   
 
