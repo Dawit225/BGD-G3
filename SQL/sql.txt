@@ -14,7 +14,11 @@ This document shows the process of data management and data cleaning and creatin
               
               table 3) "AggregateWeek.csv" -->> "week(month of observations)", "block(block number)", "pop(block population)", "acces (block accessibility)", "tem(weekly average temperature in the block)", "prec(weeekly average precipitation in the block)","acces (block accessibility)","obs(observation density - number of obsservation/week/block)", "long(block longitude)", "lat(block latitude)"
               
-              
+  
+*******************************************************************************************
+*******************************************************************************************
+*******************************************************************************************
+section A : in this section we are going to prepare every needed table individually
 ************************************************************
 ************************************************************
 block table
@@ -87,11 +91,27 @@ _____________________
 --creating temperature table in personal schima, from unique values (records)
 -----
 create table s2326965.g3temp as
-   select distinct on (longit, latit) * from public.temperature
+   select distinct on (lon, lat) * from public.temperature
  (43357 records)
 _____________________
---creating temperature table in personal schima, from unique values (records) based on the project time frame
+--creating a new column (named date) for temperature date in the temperature table
 -----
+ALTER TABLE s2326965.g3temp
+ADD date date;
+_____________________
+--set the date values by converting dtime format from integer to date
+-----
+update s2326965.g3temp
+SEt date = date(dtime::TEXT)
+_____________________
+--create the final temprature table based on the project timeline
+-----
+create table s2326965.g3temperature as
+   select * from s2326965.g3temp
+   where date BETWEEN '2017-01-01' AND '2017-06-30'
+(43357 records)
+
+
 
 ************************************************************
 ************************************************************
@@ -99,11 +119,35 @@ percipitation table
 _____________________
 --to see if there is any duplicate values in the tempreture table
 -----
-select t.block, t.dtime , count(*)
-FROM public.temperature as t
-group by t.block, t.dtime
-HAVING count(*) > 1
+select p.block, p.dtime , count(*)
+  FROM public.precipitation as p
+  group by p.block, p.dtime
+  HAVING count(*) > 1
 (there is not any duplication in this table)
+_____________________
+--creating an initial precipitation table in personal schima, from unique values (records)
+-----
+create table s2326965.g3prec as
+   select distinct on (lon, lat) * from public.precipitation
+ (40226 records)
+_____________________
+--creating a new column (named date) for precipitation date in the precipitation table
+-----
+ALTER TABLE s2326965.g3prec
+ADD date date;
+_____________________
+--set the date values by converting dtime format from integer to date
+-----
+update s2326965.g3prec
+SEt date = date(dtime::TEXT)
+_____________________
+--create the final temprature table based on the project timeline
+-----
+create table s2326965.g3precipitation as
+   select * from s2326965.g3prec
+   where date BETWEEN '2017-01-01' AND '2017-06-30'
+ (40226 records)
+
 
 
 ************************************************************
@@ -177,6 +221,16 @@ create table s2326965.g3population_final as
   group by pop.block
 (37994 records)
 
+
+
+*******************************************************************************************
+*******************************************************************************************
+*******************************************************************************************
+section B : in this section we are going join all tables together based on time and block number
+************************************************************
+************************************************************
+population table
+***
 
 
 
